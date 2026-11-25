@@ -1,0 +1,427 @@
+<div class="min-h-screen bg-slate-50 p-4 md:p-8">
+
+  <!-- Header -->
+  <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">
+        Category Management
+      </h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Manage grocery categories and their hierarchy.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openCreateModal()"
+      class="rounded-lg bg-blue-600 px-5 py-2.5
+             font-medium text-white transition hover:bg-blue-700"
+    >
+      + Add Category
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="mb-4 rounded-lg border border-green-200
+                bg-green-50 p-3 text-sm text-green-700">
+      {{ success() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div class="mb-4 rounded-lg border border-red-200
+                bg-red-50 p-3 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Search -->
+  <div class="mb-5 rounded-xl border border-slate-200
+              bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <div class="flex-1">
+        <label
+          for="categorySearch"
+          class="mb-1 block text-sm font-medium text-slate-700"
+        >
+          Search Categories
+        </label>
+
+        <input
+          id="categorySearch"
+          type="text"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+          placeholder="Search by name or slug..."
+          class="w-full rounded-lg border border-slate-300
+                 px-4 py-2.5 outline-none
+                 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
+      <div class="flex items-end">
+        <button
+          type="button"
+          (click)="search.set('')"
+          class="rounded-lg border border-slate-300
+                 px-4 py-2.5 text-sm font-medium
+                 text-slate-700 hover:bg-slate-100"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-hidden rounded-xl border border-slate-200
+              bg-white shadow-sm">
+
+    @if (loading()) {
+      <div class="p-10 text-center text-slate-500">
+        Loading categories...
+      </div>
+    } @else {
+
+      @if (categoryRows().length === 0) {
+        <div class="p-10 text-center">
+          <p class="font-medium text-slate-700">
+            No categories found.
+          </p>
+          <p class="mt-1 text-sm text-slate-500">
+            Create a category or change your search.
+          </p>
+        </div>
+      } @else {
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[850px] text-left">
+
+            <thead class="bg-slate-100 text-xs
+                         uppercase tracking-wider text-slate-600">
+              <tr>
+                <th class="px-5 py-4">Category</th>
+                <th class="px-5 py-4">Slug</th>
+                <th class="px-5 py-4">Parent</th>
+                <th class="px-5 py-4">Status</th>
+                <th class="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-100">
+
+              @for (row of categoryRows(); track row.category.id) {
+                <tr class="transition hover:bg-slate-50">
+
+                  <!-- Name / hierarchy -->
+                  <td class="px-5 py-4">
+                    <div
+                      class="flex items-center gap-2"
+                      [style.padding-left.px]="row.depth * 24"
+                    >
+                      @if (row.depth > 0) {
+                        <span class="text-slate-400">↳</span>
+                      }
+
+                      @if (row.category.icon) {
+                        <span>{{ row.category.icon }}</span>
+                      }
+
+                      <span class="font-medium text-slate-800">
+                        {{ row.category.name }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Slug -->
+                  <td class="px-5 py-4">
+                    <span class="rounded bg-slate-100 px-2 py-1
+                                 text-xs text-slate-600">
+                      {{ row.category.slug }}
+                    </span>
+                  </td>
+
+                  <!-- Parent -->
+                  <td class="px-5 py-4 text-sm text-slate-600">
+                    {{ getParentName(row.category) }}
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-5 py-4">
+                    @if (row.category.isActive) {
+                      <span class="rounded-full bg-green-100
+                                   px-3 py-1 text-xs font-medium
+                                   text-green-700">
+                        Active
+                      </span>
+                    } @else {
+                      <span class="rounded-full bg-slate-100
+                                   px-3 py-1 text-xs font-medium
+                                   text-slate-600">
+                        Inactive
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-5 py-4">
+                    <div class="flex justify-end gap-2">
+
+                      <button
+                        type="button"
+                        (click)="openEditModal(row.category)"
+                        class="rounded-lg border border-blue-200
+                               px-3 py-1.5 text-sm text-blue-700
+                               hover:bg-blue-50"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deleteCategory(row.category)"
+                        class="rounded-lg border border-red-200
+                               px-3 py-1.5 text-sm text-red-700
+                               hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+
+                    </div>
+                  </td>
+                </tr>
+              }
+
+            </tbody>
+          </table>
+        </div>
+
+      }
+    }
+  </div>
+
+  <!-- Modal -->
+  @if (modalOpen()) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center
+             bg-black/50 p-4"
+      (click)="closeModal()"
+    >
+
+      <div
+        class="max-h-[90vh] w-full max-w-xl overflow-y-auto
+               rounded-2xl bg-white shadow-2xl"
+        (click)="$event.stopPropagation()"
+      >
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between
+                    border-b border-slate-200 px-6 py-4">
+
+          <h2 class="text-xl font-semibold text-slate-800">
+            {{ editingCategory() ? 'Edit Category' : 'Create Category' }}
+          </h2>
+
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Form -->
+        <form
+          [formGroup]="form"
+          (ngSubmit)="saveCategory()"
+          class="space-y-4 p-6"
+        >
+
+          <!-- Name -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Category Name *
+            </label>
+
+            <input
+              formControlName="name"
+              (blur)="generateSlug()"
+              type="text"
+              placeholder="e.g. Fruits"
+              class="w-full rounded-lg border border-slate-300
+                     px-4 py-2.5 outline-none
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+
+            @if (form.controls.name.touched &&
+                 form.controls.name.errors) {
+              <p class="mt-1 text-xs text-red-600">
+                @if (form.controls.name.errors['required']) {
+                  Category name is required.
+                }
+                @if (form.controls.name.errors['maxlength']) {
+                  Maximum 100 characters allowed.
+                }
+              </p>
+            }
+          </div>
+
+          <!-- Slug -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Slug *
+            </label>
+
+            <div class="flex gap-2">
+              <input
+                formControlName="slug"
+                type="text"
+                placeholder="e.g. fruits"
+                class="flex-1 rounded-lg border border-slate-300
+                       px-4 py-2.5 outline-none
+                       focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+
+              <button
+                type="button"
+                (click)="generateSlug()"
+                class="rounded-lg border border-slate-300
+                       px-3 text-sm text-slate-700 hover:bg-slate-100"
+              >
+                Generate
+              </button>
+            </div>
+
+            @if (form.controls.slug.touched &&
+                 form.controls.slug.errors) {
+              <p class="mt-1 text-xs text-red-600">
+                @if (form.controls.slug.errors['required']) {
+                  Slug is required.
+                }
+                @if (form.controls.slug.errors['pattern']) {
+                  Only lowercase letters, numbers and hyphens are allowed.
+                }
+                @if (form.controls.slug.errors['maxlength']) {
+                  Maximum 120 characters allowed.
+                }
+              </p>
+            }
+          </div>
+
+          <!-- Parent -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Parent Category
+            </label>
+
+            <select
+              formControlName="parentId"
+              class="w-full rounded-lg border border-slate-300
+                     px-4 py-2.5 outline-none
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">No parent (Root category)</option>
+
+              @for (category of getParentOptions(); track category.id) {
+                <option [value]="category.id">
+                  {{ category.name }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- Icon -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Icon
+            </label>
+
+            <input
+              formControlName="icon"
+              type="text"
+              placeholder="Emoji or icon identifier"
+              class="w-full rounded-lg border border-slate-300
+                     px-4 py-2.5 outline-none
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Description
+            </label>
+
+            <textarea
+              formControlName="description"
+              rows="3"
+              placeholder="Category description..."
+              class="w-full rounded-lg border border-slate-300
+                     px-4 py-2.5 outline-none
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            ></textarea>
+
+            @if (form.controls.description.touched &&
+                 form.controls.description.errors?.['maxlength']) {
+              <p class="mt-1 text-xs text-red-600">
+                Maximum 500 characters allowed.
+              </p>
+            }
+          </div>
+
+          <!-- Active -->
+          <div class="flex items-center gap-3">
+            <input
+              id="categoryActive"
+              type="checkbox"
+              formControlName="isActive"
+              class="h-4 w-4 rounded border-slate-300
+                     text-blue-600 focus:ring-blue-500"
+            />
+
+            <label
+              for="categoryActive"
+              class="text-sm font-medium text-slate-700"
+            >
+              Active category
+            </label>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex justify-end gap-3 border-t
+                      border-slate-200 pt-4">
+
+            <button
+              type="button"
+              (click)="closeModal()"
+              [disabled]="saving()"
+              class="rounded-lg border border-slate-300
+                     px-4 py-2.5 text-sm font-medium
+                     text-slate-700 hover:bg-slate-100
+                     disabled:opacity-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              [disabled]="saving()"
+              class="rounded-lg bg-blue-600 px-5 py-2.5
+                     text-sm font-medium text-white
+                     hover:bg-blue-700 disabled:cursor-not-allowed
+                     disabled:opacity-50"
+            >
+              {{ saving() ? 'Saving...' :
+                 editingCategory() ? 'Update Category' : 'Create Category' }}
+            </button>
+
+          </div>
+
+        </form>
+      </div>
+    </div>
+  }
+
+</div>

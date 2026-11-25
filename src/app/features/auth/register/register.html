@@ -1,0 +1,83 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
+
+    <div class="mb-8 text-center">
+      <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 text-3xl">
+        🛒
+      </div>
+
+      <h1 class="text-3xl font-bold text-green-700">Savora</h1>
+      <p class="mt-2 text-sm text-slate-500">
+        Start managing your grocery spending.
+      </p>
+    </div>
+
+    <h2 class="mb-2 text-xl font-semibold">Create account</h2>
+
+    <form (ngSubmit)="submit()" class="mt-6 space-y-4">
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Full name</label>
+        <input
+          name="name"
+          [(ngModel)]="name"
+          required
+          autocomplete="name"
+          placeholder="Your name"
+          class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-600"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Email</label>
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+          placeholder="you@example.com"
+          class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-600"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Password</label>
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          placeholder="Minimum 8 characters"
+          class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-600"
+        />
+      </div>
+
+      <div
+        *ngIf="error"
+        class="rounded-lg bg-red-50 p-3 text-sm text-red-600"
+      >
+        {{ error }}
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading"
+        class="w-full rounded-xl bg-green-600 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+      >
+        {{ loading ? 'Creating account...' : 'Create Account' }}
+      </button>
+
+    </form>
+
+    <p class="mt-6 text-center text-sm text-slate-500">
+      Already have an account?
+      <a routerLink="/login" class="font-semibold text-green-700">
+        Sign in
+      </a>
+    </p>
+
+  </div>
+</div>

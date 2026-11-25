@@ -1,0 +1,21 @@
+    <nav class="fixed bottom-0 left-0 right-0 z-40
+                border-t border-slate-200 bg-white
+                px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+
+      <div class="mx-auto flex max-w-xl justify-around">
+
+        @for (item of items; track item.path) {
+          <a [routerLink]="item.path"
+             routerLinkActive="text-green-700"
+             [routerLinkActiveOptions]="{ exact: item.path === '/dashboard' }"
+             class="flex min-w-0 flex-1 flex-col items-center
+                    gap-1 py-3 text-xs text-slate-500">
+
+            <span class="text-lg">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+
+          </a>
+        }
+
+      </div>
+    </nav>

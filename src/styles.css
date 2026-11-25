@@ -1,1 +1,25 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --savora-green-primary: #164e35;
+  --savora-green-dark: #0f3826;
+  --savora-green-accent: #2e7d5b;
+  --savora-green-tint: #e8f3ee;
+  --savora-warm-white: #f7f5f0;
+  --savora-black: #141715;
+}
+
+body {
+  margin: 0;
+  background: var(--savora-green-white);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  color: #0f172a;
+}
+
+.logo-color{
+  color: var(--savora-black);
+  font-size: 34px;
+  text-transform: uppercase;
+}

@@ -1,0 +1,43 @@
+    <header class="sticky top-0 z-30 flex h-16 items-center
+                   justify-between border-b border-slate-200
+                   bg-white px-4 md:px-6">
+
+      <div>
+        <h1 class="text-lg font-semibold text-slate-900">
+          Savora Dashboard
+        </h1>
+        <p class="hidden text-xs text-slate-500 sm:block">
+          Manage your household savings
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+
+        <button class="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                aria-label="Notifications">
+          🔔
+        </button>
+
+        <div class="flex items-center gap-2">
+          <div class="flex h-9 w-9 items-center justify-center
+                      rounded-full bg-green-100 text-sm font-semibold
+                      text-green-700">
+            {{ initials }}
+          </div>
+
+          <div class="hidden sm:block">
+            <p class="text-sm font-semibold text-slate-800">
+              {{ userName }}
+            </p>
+            <p class="text-xs text-slate-500">Account</p>
+          </div>
+        </div>
+
+        <button (click)="logout()"
+                class="hidden rounded-lg border px-3 py-2
+                       text-sm text-slate-600 hover:bg-slate-50 sm:block">
+          Logout
+        </button>
+
+      </div>
+    </header>

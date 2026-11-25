@@ -1,0 +1,760 @@
+<div class="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+      <div class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+      <p class="mt-4 text-sm text-slate-500">Loading shopping list...</p>
+    </div>
+  } @else if (list(); as shoppingList) {
+
+    <!-- Header -->
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+      <div>
+        <a
+          routerLink="/shopping-lists"
+          class="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+          ← Back to shopping lists
+        </a>
+
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-bold text-slate-900">
+            {{ shoppingList.name }}
+          </h1>
+
+          <span
+            class="rounded-full px-3 py-1 text-xs font-semibold"
+            [ngClass]="{
+              'bg-emerald-50 text-emerald-700': shoppingList.status === 'ACTIVE',
+              'bg-blue-50 text-blue-700': shoppingList.status === 'COMPLETED',
+              'bg-slate-100 text-slate-600': shoppingList.status === 'ARCHIVED'
+            }">
+            {{ getStatusLabel(shoppingList.status) }}
+          </span>
+        </div>
+
+        <p class="mt-1 text-sm text-slate-500">
+          {{ shoppingList.description || 'Manage your household shopping items.' }}
+        </p>
+      </div>
+
+      @if (shoppingList.status === 'ACTIVE') {
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="completeList()"
+            class="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+            Complete list
+          </button>
+
+          <button
+            type="button"
+            (click)="openAddItemForm()"
+            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+            + Add item
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Notifications -->
+    @if (error()) {
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {{ error() }}
+      </div>
+    }
+
+    @if (success()) {
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+        {{ success() }}
+      </div>
+    }
+
+    <!-- Summary -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5">
+        <p class="text-sm text-slate-500">Total items</p>
+        <p class="mt-2 text-3xl font-bold text-slate-900">
+          {{ totalItems() }}
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5">
+        <p class="text-sm text-slate-500">Purchased</p>
+        <p class="mt-2 text-3xl font-bold text-emerald-600">
+          {{ purchasedCount() }}
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5">
+        <p class="text-sm text-slate-500">Remaining</p>
+        <p class="mt-2 text-3xl font-bold text-orange-600">
+          {{ activeItems().length }}
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Progress -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-semibold text-slate-900">Shopping progress</h2>
+          <p class="mt-1 text-sm text-slate-500">
+            {{ purchasedCount() }} of {{ totalItems() }} items purchased
+          </p>
+        </div>
+
+        <span class="text-xl font-bold text-emerald-600">
+          {{ progress() }}%
+        </span>
+      </div>
+
+      <div class="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+        <div
+          class="h-full rounded-full bg-emerald-500 transition-all duration-300"
+          [style.width.%]="progress()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Add / Edit Item Form -->
+    @if (showItemForm()) {
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <div class="mb-5 flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">
+              {{ editingItem() ? 'Edit shopping item' : 'Add shopping item' }}
+            </h2>
+            <p class="mt-1 text-sm text-slate-500">
+              Select a catalog product and enter its quantity.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="closeItemForm()"
+            class="text-sm text-slate-500 hover:text-slate-900">
+            Close
+          </button>
+        </div>
+
+        <form
+          [formGroup]="itemForm"
+          (ngSubmit)="saveItem()"
+          class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+          <!-- Product search and selection -->
+          <div class="md:col-span-2">
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Search products
+            </label>
+
+            <input
+              [formControl]="searchControl"
+              placeholder="Search product by name or brand..."
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+
+            <label class="mb-1 mt-3 block text-sm font-medium text-slate-700">
+              Product
+            </label>
+
+            <select
+              formControlName="productId"
+              [disabled]="!!editingItem()"
+              class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100">
+
+              <option value="">Select a product</option>
+
+              @for (product of products(); track product.id) {
+                <option [value]="product.id">
+                  {{ product.name }}
+                  @if (product.brand) {
+                    — {{ product.brand }}
+                  }
+                  @if (product.variant) {
+                    ({{ product.variant }})
+                  }
+                </option>
+              }
+            </select>
+
+            @if (productsLoading()) {
+              <p class="mt-1 text-xs text-slate-500">
+                Loading products...
+              </p>
+            }
+
+            @if (
+              !productsLoading() &&
+              products().length === 0
+            ) {
+              <p class="mt-1 text-xs text-slate-500">
+                No active products found. Try another search.
+              </p>
+            }
+
+            @if (
+              itemForm.controls.productId.touched &&
+              itemForm.controls.productId.invalid
+            ) {
+              <p class="mt-1 text-xs text-red-600">
+                Please select a product.
+              </p>
+            }
+          </div>
+
+          <!-- Quantity -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Quantity
+            </label>
+
+            <input
+              type="number"
+              min="0.001"
+              max="9999999.999"
+              step="0.001"
+              formControlName="quantity"
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+
+            @if (
+              itemForm.controls.quantity.touched &&
+              itemForm.controls.quantity.invalid
+            ) {
+              <p class="mt-1 text-xs text-red-600">
+                Enter a valid quantity greater than zero.
+              </p>
+            }
+          </div>
+
+          <!-- Unit -->
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Unit
+            </label>
+
+            <input
+              formControlName="unit"
+              placeholder="e.g. kg, litre, pack, pcs"
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+          </div>
+
+          <!-- Notes -->
+          <div class="md:col-span-2">
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Notes
+            </label>
+
+            <textarea
+              formControlName="notes"
+              rows="3"
+              placeholder="Optional notes..."
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+            </textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 md:col-span-2">
+            <button
+              type="button"
+              (click)="closeItemForm()"
+              class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              [disabled]="saving()"
+              class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+              {{ saving() ? 'Saving...' : editingItem() ? 'Update item' : 'Add item' }}
+            </button>
+          </div>
+
+        </form>
+      </div>
+    }
+
+    <!-- Active items -->
+    <section class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-900">
+          To buy
+          <span class="ml-1 text-sm font-normal text-slate-500">
+            ({{ activeItems().length }})
+          </span>
+        </h2>
+      </div>
+
+      @if (activeItems().length === 0) {
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div class="text-3xl">🎉</div>
+          <h3 class="mt-3 font-semibold text-slate-900">
+            Nothing left to buy
+          </h3>
+          <p class="mt-1 text-sm text-slate-500">
+            All items have been purchased or your list is empty.
+          </p>
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (item of activeItems(); track item.id) {
+            <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-start">
+
+              <button
+                type="button"
+                [disabled]="isReadOnly()"
+                (click)="togglePurchased(item)"
+                class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 text-transparent hover:border-emerald-500 disabled:cursor-not-allowed">
+                <span class="text-xs">✓</span>
+              </button>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                  <div>
+                    <h3 class="font-semibold text-slate-900">
+                      {{ getProductName(item) }}
+                    </h3>
+
+                    @if (getProductDetails(item)) {
+                      <p class="mt-0.5 text-xs text-slate-500">
+                        {{ getProductDetails(item) }}
+                      </p>
+                    }
+
+                    <p class="mt-1 text-sm text-slate-600">
+                      {{ item.quantity }}
+                      {{ item.unit || 'units' }}
+                    </p>
+
+                    @if (item.notes) {
+                      <p class="mt-1 text-xs text-slate-500">
+                        {{ item.notes }}
+                      </p>
+                    }
+                  </div>
+
+                  @if (!isReadOnly()) {
+                    <div class="flex items-center gap-3">
+                      <button
+                        type="button"
+                        (click)="openEditItemForm(item)"
+                        class="text-sm font-medium text-slate-500 hover:text-emerald-700">
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deleteItem(item)"
+                        class="text-sm font-medium text-red-600 hover:text-red-700">
+                        Delete
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- Price estimation -->
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                  @if (priceEstimates()[item.id]; as price) {
+                    @if (price.estimatedUnitPrice !== null) {
+                      <div class="flex flex-wrap items-center justify-between gap-3">
+
+                        <div>
+                          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Estimated price
+                          </p>
+
+                          <p class="mt-1 text-lg font-semibold text-slate-900">
+                            {{ +price.estimatedUnitPrice | currency: price.currencyCode }}
+                            <span class="text-sm font-normal text-slate-500">/ unit</span>
+                          </p>
+
+                          <p class="mt-1 text-sm text-slate-600">
+                            Quantity: {{ price.quantity }}
+                          </p>
+
+                          <p class="mt-1 text-sm font-semibold text-emerald-700">
+                            Estimated total:
+                            {{ +(price.estimatedTotal ?? 0) | currency: price.currencyCode }}
+                          </p>
+
+                          @if (price.notes) {
+                            <p class="mt-1 text-xs text-slate-500">
+                              {{ price.notes }}
+                            </p>
+                          }
+                        </div>
+
+                        @if (!isReadOnly()) {
+                          <div class="flex gap-2">
+                            <button
+                              type="button"
+                              (click)="openPriceEditor(item)"
+                              class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white">
+                              Edit price
+                            </button>
+
+                            <button
+                              type="button"
+                              (click)="deletePriceEstimate(item)"
+                              class="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+                              Delete
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-medium text-slate-700">
+                          No price estimate
+                        </p>
+                        <p class="text-xs text-slate-500">
+                          Add an estimated price to track your shopping budget.
+                        </p>
+                      </div>
+                    </div>
+                  }
+
+                  @if (!isReadOnly() && priceEditorItemId() === item.id) {
+                    <form
+                      [formGroup]="priceForm"
+                      (ngSubmit)="savePriceEstimate(item)"
+                      class="mt-4 space-y-3 border-t border-slate-200 pt-4">
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Estimated unit price
+                        </label>
+
+                        <input
+                          type="number"
+                          formControlName="estimatedUnitPrice"
+                          min="0.01"
+                          step="0.01"
+                          placeholder="Enter price"
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+
+                        @if (
+                          priceForm.controls.estimatedUnitPrice.touched &&
+                          priceForm.controls.estimatedUnitPrice.invalid
+                        ) {
+                          <p class="mt-1 text-xs text-red-600">
+                            Enter a valid price greater than zero.
+                          </p>
+                        }
+                      </div>
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Currency
+                        </label>
+
+                        <input
+                          type="text"
+                          formControlName="currencyCode"
+                          maxlength="3"
+                          placeholder="INR"
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm uppercase outline-none focus:border-blue-500" />
+                      </div>
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Notes
+                        </label>
+
+                        <textarea
+                          formControlName="notes"
+                          rows="2"
+                          maxlength="1000"
+                          placeholder="Optional price notes..."
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500">
+                        </textarea>
+                      </div>
+
+                      <div class="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          (click)="closePriceEditor()"
+                          class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-white">
+                          Cancel
+                        </button>
+
+                        <button
+                          type="submit"
+                          [disabled]="priceSaving() || priceForm.invalid"
+                          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                          {{ priceSaving() ? 'Saving...' : 'Save estimate' }}
+                        </button>
+                      </div>
+                    </form>
+                  }
+
+                  @if (!isReadOnly() && priceEditorItemId() !== item.id) {
+                    <button
+                      type="button"
+                      (click)="openPriceEditor(item)"
+                      class="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                      {{ hasPriceEstimate(item.id) ? 'Edit price estimate' : '+ Add price estimate' }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Purchased items -->
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold text-slate-900">
+        Purchased
+        <span class="ml-1 text-sm font-normal text-slate-500">
+          ({{ purchasedItems().length }})
+        </span>
+      </h2>
+
+      @if (purchasedItems().length === 0) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+          No purchased items yet.
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (item of purchasedItems(); track item.id) {
+            <div class="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4 sm:flex-row sm:items-start">
+
+              <button
+                type="button"
+                [disabled]="isReadOnly()"
+                (click)="togglePurchased(item)"
+                class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-emerald-500 bg-emerald-500 text-white disabled:cursor-not-allowed">
+                ✓
+              </button>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                  <div>
+                    <h3 class="font-semibold text-slate-500 line-through">
+                      {{ getProductName(item) }}
+                    </h3>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                      {{ item.quantity }} {{ item.unit || 'units' }}
+                    </p>
+
+                    @if (item.notes) {
+                      <p class="mt-1 text-xs text-slate-500">
+                        {{ item.notes }}
+                      </p>
+                    }
+
+                    @if (item.purchasedAt) {
+                      <p class="mt-1 text-xs text-emerald-700">
+                        Purchased {{ item.purchasedAt | date:'medium' }}
+                      </p>
+                    }
+                  </div>
+
+                  @if (!isReadOnly()) {
+                    <div class="flex items-center gap-3">
+                      <button
+                        type="button"
+                        (click)="openEditItemForm(item)"
+                        class="text-sm font-medium text-slate-500 hover:text-emerald-700">
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deleteItem(item)"
+                        class="text-sm font-medium text-red-600 hover:text-red-700">
+                        Delete
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- Price estimation -->
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                  @if (priceEstimates()[item.id]; as price) {
+                    @if (price.estimatedUnitPrice !== null) {
+                      <div class="flex flex-wrap items-center justify-between gap-3">
+
+                        <div>
+                          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Estimated price
+                          </p>
+
+                          <p class="mt-1 text-lg font-semibold text-slate-900">
+                            {{ +price.estimatedUnitPrice | currency: price.currencyCode }}
+                            <span class="text-sm font-normal text-slate-500">/ unit</span>
+                          </p>
+
+                          <p class="mt-1 text-sm text-slate-600">
+                            Quantity: {{ price.quantity }}
+                          </p>
+
+                          <p class="mt-1 text-sm font-semibold text-emerald-700">
+                            Estimated total:
+                            {{ +(price.estimatedTotal ?? 0) | currency: price.currencyCode }}
+                          </p>
+
+                          @if (price.notes) {
+                            <p class="mt-1 text-xs text-slate-500">
+                              {{ price.notes }}
+                            </p>
+                          }
+                        </div>
+
+                        @if (!isReadOnly()) {
+                          <div class="flex gap-2">
+                            <button
+                              type="button"
+                              (click)="openPriceEditor(item)"
+                              class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white">
+                              Edit price
+                            </button>
+
+                            <button
+                              type="button"
+                              (click)="deletePriceEstimate(item)"
+                              class="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+                              Delete
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-medium text-slate-700">
+                          No price estimate
+                        </p>
+                        <p class="text-xs text-slate-500">
+                          Add an estimated price to track your shopping budget.
+                        </p>
+                      </div>
+                    </div>
+                  }
+
+                  @if (!isReadOnly() && priceEditorItemId() === item.id) {
+                    <form
+                      [formGroup]="priceForm"
+                      (ngSubmit)="savePriceEstimate(item)"
+                      class="mt-4 space-y-3 border-t border-slate-200 pt-4">
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Estimated unit price
+                        </label>
+
+                        <input
+                          type="number"
+                          formControlName="estimatedUnitPrice"
+                          min="0.01"
+                          step="0.01"
+                          placeholder="Enter price"
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+
+                        @if (
+                          priceForm.controls.estimatedUnitPrice.touched &&
+                          priceForm.controls.estimatedUnitPrice.invalid
+                        ) {
+                          <p class="mt-1 text-xs text-red-600">
+                            Enter a valid price greater than zero.
+                          </p>
+                        }
+                      </div>
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Currency
+                        </label>
+
+                        <input
+                          type="text"
+                          formControlName="currencyCode"
+                          maxlength="3"
+                          placeholder="INR"
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm uppercase outline-none focus:border-blue-500" />
+                      </div>
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">
+                          Notes
+                        </label>
+
+                        <textarea
+                          formControlName="notes"
+                          rows="2"
+                          maxlength="1000"
+                          placeholder="Optional price notes..."
+                          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500">
+                        </textarea>
+                      </div>
+
+                      <div class="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          (click)="closePriceEditor()"
+                          class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-white">
+                          Cancel
+                        </button>
+
+                        <button
+                          type="submit"
+                          [disabled]="priceSaving() || priceForm.invalid"
+                          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                          {{ priceSaving() ? 'Saving...' : 'Save estimate' }}
+                        </button>
+                      </div>
+                    </form>
+                  }
+
+                  @if (!isReadOnly() && priceEditorItemId() !== item.id) {
+                    <button
+                      type="button"
+                      (click)="openPriceEditor(item)"
+                      class="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                      {{ hasPriceEstimate(item.id) ? 'Edit price estimate' : '+ Add price estimate' }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    @if (isReadOnly()) {
+      <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+        This shopping list is {{ getStatusLabel(shoppingList.status).toLowerCase() }}.
+        Item modifications are disabled.
+      </div>
+    }
+
+  } @else {
+    <div class="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+      <h2 class="font-semibold text-slate-900">Shopping list unavailable</h2>
+      <p class="mt-2 text-sm text-slate-500">
+        {{ error() || 'The requested shopping list could not be found.' }}
+      </p>
+      <a
+        routerLink="/shopping-lists"
+        class="mt-4 inline-block text-sm font-semibold text-emerald-700">
+        Back to shopping lists
+      </a>
+    </div>
+  }
+
+</div>

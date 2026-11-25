@@ -1,0 +1,38 @@
+    <aside class="hidden w-64 shrink-0 border-r border-slate-200
+                  bg-white lg:flex lg:flex-col">
+
+      <div class="flex h-16 items-center gap-3 border-b px-6">
+        <span class="text-xl font-bold text-slate-900 logo-color">Savora</span>
+      </div>
+
+      <nav class="flex-1 space-y-1 p-4">
+
+        <p class="mb-3 px-3 text-xs font-semibold uppercase
+                  tracking-wider text-slate-400">
+          Workspace
+        </p>
+
+        @for (item of menuItems; track item.path) {
+          <a [routerLink]="item.path"
+             routerLinkActive="bg-green-50 text-green-700"
+             [routerLinkActiveOptions]="{ exact: item.path === '/dashboard' }"
+             class="flex items-center gap-3 rounded-xl px-3 py-3
+                    text-sm font-medium text-slate-600
+                    hover:bg-slate-50">
+
+            <span>{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+
+          </a>
+        }
+
+      </nav>
+
+      <div class="border-t p-4">
+        <p class="text-xs text-slate-400">Savora v1.0</p>
+        <p class="mt-1 text-sm font-medium text-slate-600">
+          Smart Grocery Savings
+        </p>
+      </div>
+
+    </aside>
