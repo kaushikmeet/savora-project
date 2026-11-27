@@ -5,14 +5,15 @@ import { Register } from './features/auth/register/register';
 import { Login } from './features/auth/login/login';
 import { Dashboard } from './features/dashboard/dashboard';
 import { Shell } from './layout/shell/shell';
-
-import { Budgets } from './features/budgets/budgets';
-import { Expenses } from './features/expenses/expenses';
 import { Households } from './features/households/households';
 import { Categories } from './features/catalog/categories/categories';
 import { Products } from './features/catalog/products/products';
 import { ShoppingLists } from './features/shopping/shopping-lists/shopping-lists';
 import { ShoppingListDetails } from './features/shopping/shopping-list-details/shopping-list-details';
+import { Budgets } from './features/budgets/budget/budget';
+import { BudgetDetails } from './features/budgets/budge-details/budge-details';
+import { Expense } from './features/expenses/expense/expense';
+
 
 export const routes: Routes = [
   {
@@ -57,8 +58,12 @@ export const routes: Routes = [
         component: Budgets
       },
       {
+        path:'budgets/:id',
+        component: BudgetDetails
+      },
+      {
         path:'expenses',
-        component: Expenses
+        component: Expense
       },
       {
         path: 'admin/catalog/categories',
